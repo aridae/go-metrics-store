@@ -26,12 +26,14 @@ var (
 	updateMetricWithURLParamsValueURLPath = fmt.Sprintf("/update/{%s}/{%s}/{%s}", urlParamMetricType, urlParamMetricName, urlParamMetricValue)
 	getMetricValueURLPath                 = fmt.Sprintf("/value/{%s}/{%s}", urlParamMetricType, urlParamMetricName)
 	getAllMetricValuesURLPath             = "/"
+	pingHandlerURLPath                    = "/ping"
 )
 
 type useCasesController interface {
 	UpsertScalarMetric(ctx context.Context, metricToRegister models.ScalarMetricToRegister, strategy metricsupsertstrategies.Strategy) (models.ScalarMetric, error)
 	GetScalarMetricLatestState(ctx context.Context, metricKey models.MetricKey) (*models.ScalarMetric, error)
 	GetAllScalarMetricsLatestStates(ctx context.Context) ([]models.ScalarMetric, error)
+	Healthcheck(ctx context.Context) error
 }
 
 type Router struct {
@@ -51,6 +53,8 @@ func NewRouter(useCasesController useCasesController) *Router {
 	chiMux.HandleFunc(getMetricWithJSONBodyURLPath, router.getMetricJSONHandler)
 	chiMux.HandleFunc(updateMetricWithJSONBodyURLPath+"/", router.updateMetricJSONHandler) // trailing slash
 	chiMux.HandleFunc(getMetricWithJSONBodyURLPath+"/", router.getMetricJSONHandler)       // trailing slash
+	chiMux.HandleFunc(pingHandlerURLPath, router.pingHandler)
+	chiMux.HandleFunc(pingHandlerURLPath+"/", router.pingHandler) // trailing slash
 
 	chiMux.HandleFunc(updateMetricWithURLParamsValueURLPath, router.updateMetricByURLPathHandler)
 	chiMux.HandleFunc(getMetricValueURLPath, router.getMetricByURLPathHandler)
@@ -67,9 +71,9 @@ func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func resolveMetricFactoryForMetricType(metricType string) (metricsfabrics.ScalarMetricFactory, error) {
 	switch metricType {
 	case counter:
-		return metricsfabrics.NewCounterMetricFactory(), nil
+		return metricsfabrics.ObtainCounterMetricFactory(), nil
 	case gauge:
-		return metricsfabrics.NewGaugeMetricFactory(), nil
+		return metricsfabrics.ObtainGaugeMetricFactory(), nil
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", metricType)
 	}

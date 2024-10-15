@@ -5,15 +5,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/aridae/go-metrics-store/internal/server/config"
 	"github.com/aridae/go-metrics-store/internal/server/logger"
 	"github.com/aridae/go-metrics-store/internal/server/models"
 	"github.com/aridae/go-metrics-store/internal/server/mw"
-	"github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric"
+	scalarmetric "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric"
+	scalarmetricinmem "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric/inmemory"
+	sclarmetricpg "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric/postgres"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http/handlers"
 	"github.com/aridae/go-metrics-store/internal/server/usecases"
+	"github.com/aridae/go-metrics-store/pkg/postgres"
 	tsstorage "github.com/aridae/go-metrics-store/pkg/timeseries-storage"
 )
 
@@ -34,11 +38,9 @@ func main() {
 
 	cnf := config.Obtain()
 
-	memStore := mustInitMemStore(ctx, cnf)
+	repo := mustInitRepo(ctx, cnf)
 
-	metricsRepo := scalarmetric.NewRepository(memStore)
-
-	useCaseController := usecases.NewController(metricsRepo)
+	useCaseController := usecases.NewController(repo)
 
 	httpRouter := handlers.NewRouter(useCaseController)
 
@@ -80,4 +82,30 @@ func mustInitMemStore(ctx context.Context, cnf *config.Config) *tsstorage.MemTim
 	}
 
 	return memStore
+}
+
+func mustInitPostgresClient(ctx context.Context, cnf *config.Config) *postgres.Client {
+	client, err := postgres.NewClient(ctx, cnf.DatabaseDsn,
+		postgres.WithInitialReconnectBackoffOnFail(time.Second),
+	)
+	if err != nil {
+		logger.Obtain().Fatalf("failed to init postgres client: %v", err)
+	}
+
+	return client
+}
+
+func mustInitRepo(ctx context.Context, cnf *config.Config) scalarmetric.Repository {
+	if cnf.DatabaseDsn == "" {
+		memStore := mustInitMemStore(ctx, cnf)
+		return scalarmetricinmem.NewRepositoryImplementation(memStore)
+	}
+
+	pgClient := mustInitPostgresClient(ctx, cnf)
+	repo, err := sclarmetricpg.NewRepositoryImplementation(ctx, pgClient)
+	if err != nil {
+		logger.Obtain().Fatalf("failed to init repo: %v", err)
+	}
+
+	return repo
 }
