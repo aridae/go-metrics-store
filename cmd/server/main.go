@@ -5,15 +5,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/aridae/go-metrics-store/internal/server/config"
 	"github.com/aridae/go-metrics-store/internal/server/logger"
 	"github.com/aridae/go-metrics-store/internal/server/models"
 	"github.com/aridae/go-metrics-store/internal/server/mw"
-	"github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric"
+	scalarmetric "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric"
+	scalarmetricinmem "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric/inmemory"
+	sclarmetricpg "github.com/aridae/go-metrics-store/internal/server/repos/scalar-metric/postgres"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http/handlers"
 	"github.com/aridae/go-metrics-store/internal/server/usecases"
+	"github.com/aridae/go-metrics-store/pkg/postgres"
 	tsstorage "github.com/aridae/go-metrics-store/pkg/timeseries-storage"
 )
 
@@ -34,13 +38,29 @@ func main() {
 
 	cnf := config.Obtain()
 
-	memStore := mustInitMemStore(ctx, cnf)
+	var repo scalarmetric.Repository
+	var routerOptions []handlers.RouterOption
 
-	metricsRepo := scalarmetric.NewRepository(memStore)
+	if cnf.DatabaseDsn != "" {
+		pgClient := mustInitPostgresClient(ctx, cnf)
 
-	useCaseController := usecases.NewController(metricsRepo)
+		var err error
+		repo, err = sclarmetricpg.NewRepositoryImplementation(ctx, pgClient)
+		if err != nil {
+			logger.Obtain().Fatalf("failed to init repo: %v", err)
+		}
 
-	httpRouter := handlers.NewRouter(useCaseController)
+		routerOptions = append(routerOptions, handlers.CheckAvailableOnPing(pgClient))
+	}
+
+	if repo == nil {
+		memStore := mustInitMemStore(ctx, cnf)
+		repo = scalarmetricinmem.NewRepositoryImplementation(memStore)
+	}
+
+	useCaseController := usecases.NewController(repo)
+
+	httpRouter := handlers.NewRouter(useCaseController, routerOptions...)
 
 	httpServer := http.NewServer(cnf.Address, httpRouter,
 		mw.LoggingMiddleware,
@@ -80,4 +100,15 @@ func mustInitMemStore(ctx context.Context, cnf *config.Config) *tsstorage.MemTim
 	}
 
 	return memStore
+}
+
+func mustInitPostgresClient(ctx context.Context, cnf *config.Config) *postgres.Client {
+	client, err := postgres.NewClient(ctx, cnf.DatabaseDsn,
+		postgres.WithInitialReconnectBackoffOnFail(time.Second),
+	)
+	if err != nil {
+		logger.Obtain().Fatalf("failed to init postgres client: %v", err)
+	}
+
+	return client
 }
