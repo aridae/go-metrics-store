@@ -1,4 +1,4 @@
-package loggingmw
+package logging
 
 import (
 	"net/http"

@@ -3,9 +3,10 @@ package rsa
 import (
 	"bytes"
 	"crypto/rsa"
-	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"
 	"io"
 	"net/http"
+
+	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"
 )
 
 // DecryptRequestMiddleware создает middleware для HTTP-обработки, который расшифровывает зашифрованное тело запроса.

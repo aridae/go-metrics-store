@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"fmt"
-	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"
 	"io"
 	"net/http"
+
+	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"
 )
 
 // EncryptRequestClientMiddleware создает middleware для HTTP-клиента, который шифрует тело запроса перед отправкой.

@@ -1,8 +1,9 @@
 package pointer
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTo(t *testing.T) {
