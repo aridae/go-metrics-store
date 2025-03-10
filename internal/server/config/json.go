@@ -8,12 +8,12 @@ import (
 )
 
 type jsonconf struct {
-	CryptoKey                    *string `env:"crypto_key"`
-	AddressOverride              *string `env:"address"`
-	StoreIntervalSecondsOverride *int64  `env:"store_interval"`
-	FileStoragePathOverride      *string `env:"store_file"`
-	RestoreOverride              *bool   `env:"restore"`
-	DatabaseDsnOverride          *string `env:"database_dsn"`
+	CryptoKey                    *string `json:"crypto_key"`
+	AddressOverride              *string `json:"address"`
+	StoreIntervalSecondsOverride *int64  `json:"store_interval"`
+	FileStoragePathOverride      *string `json:"store_file"`
+	RestoreOverride              *bool   `json:"restore"`
+	DatabaseDsnOverride          *string `json:"database_dsn"`
 }
 
 func parseJSONFile(path string) (*jsonconf, error) {
