@@ -1,4 +1,4 @@
-package rsamw
+package rsa
 
 import (
 	"bytes"
@@ -16,18 +16,18 @@ import (
 //
 // Параметры:
 //
-//	rsaPubKey *rsa.PublicKey — публичный ключ RSA для шифрования данных.
+//	key *rsa.PublicKey — публичный ключ RSA для шифрования данных.
 //
 // Возвращаемое значение:
 //
 //	func(next http.RoundTripper) http.RoundTripper — middleware для HTTP-клиентов.
-func EncryptRequestClientMiddleware(rsaPubKey *rsa.PublicKey) func(next http.RoundTripper) http.RoundTripper {
+func EncryptRequestClientMiddleware(key *rsa.PublicKey) func(next http.RoundTripper) http.RoundTripper {
 	return func(next http.RoundTripper) http.RoundTripper {
 		if next == nil {
 			next = http.DefaultTransport
 		}
 
-		return encryptedRoundTripper{next: next, rsaPubKey: rsaPubKey}
+		return encryptedRoundTripper{next: next, rsaPubKey: key}
 	}
 }
 

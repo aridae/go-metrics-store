@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rsa"
-	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa-mw"
+	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa"
 	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"
 	"net/http"
 	_ "net/http/pprof" // подключаем пакет pprof

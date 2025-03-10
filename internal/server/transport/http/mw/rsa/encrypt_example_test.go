@@ -1,4 +1,4 @@
-package rsamw
+package rsa
 
 import (
 	"bytes"

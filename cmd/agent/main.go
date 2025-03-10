@@ -6,7 +6,7 @@ import (
 	"github.com/aridae/go-metrics-store/internal/agent/config"
 	metricsservice "github.com/aridae/go-metrics-store/internal/agent/downstreams/metrics-service"
 	metricsreporting "github.com/aridae/go-metrics-store/internal/agent/metrics-reporting"
-	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa-mw"
+	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http/mw/sha256-mw"
 	"github.com/aridae/go-metrics-store/pkg/logger"
 	rsacrypto "github.com/aridae/go-metrics-store/pkg/rsa-crypto"

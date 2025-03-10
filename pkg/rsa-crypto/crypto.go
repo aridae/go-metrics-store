@@ -29,18 +29,18 @@ import (
 //
 // Параметры:
 //
-//	rspPubKey *rsa.PublicKey — публичный ключ RSA для шифрования.
+//	key *rsa.PublicKey — публичный ключ RSA для шифрования.
 //	data []byte — данные для шифрования.
 //
 // Возвращаемые значения:
 //
 //	[]byte — зашифрованные данные.
 //	error — ошибка, если произошла ошибка при шифровании.
-func Encrypt(rsaPubKey *rsa.PublicKey, data []byte) ([]byte, error) {
+func Encrypt(key *rsa.PublicKey, data []byte) ([]byte, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty data")
 	}
-	encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, rsaPubKey, data, nil)
+	encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, key, data, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,19 +74,19 @@ func Encrypt(rsaPubKey *rsa.PublicKey, data []byte) ([]byte, error) {
 //
 // Параметры:
 //
-//	rsaPrivateKey *rsa.PrivateKey — приватный ключ RSA для расшифровки.
+//	key *rsa.PrivateKey — приватный ключ RSA для расшифровки.
 //	encryptedData []byte — зашифрованные данные.
 //
 // Возвращаемые значения:
 //
 //	[]byte — расшифрованные данные.
 //	error — ошибка, если произошла ошибка при расшифровке.
-func Decrypt(rsaPrivateKey *rsa.PrivateKey, encryptedData []byte) ([]byte, error) {
+func Decrypt(key *rsa.PrivateKey, encryptedData []byte) ([]byte, error) {
 	if len(encryptedData) == 0 {
 		return nil, fmt.Errorf("empty data")
 	}
 
-	decryptedData, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, rsaPrivateKey, encryptedData, nil)
+	decryptedData, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, key, encryptedData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("decrypt data error: %w", err)
 	}
