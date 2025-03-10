@@ -31,3 +31,13 @@ func Contains[T comparable](slice []T, target T) bool {
 
 	return false
 }
+
+func ContainsByFunc[T any](slice []T, predicate func(item T) bool) bool {
+	for _, v := range slice {
+		if isFound := predicate(v); isFound {
+			return true
+		}
+	}
+
+	return false
+}

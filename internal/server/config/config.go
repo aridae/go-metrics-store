@@ -29,6 +29,7 @@ type Config struct {
 	StoreInterval       time.Duration
 	DatabaseMaxOpenConn int
 	Restore             bool
+	TrustedSubnet       string
 }
 
 func Obtain() *Config {
@@ -153,4 +154,14 @@ func (c *Config) overrideCryptoKeyIfNotDefault(cryptoKey string, source string) 
 
 	logger.Infof("overriding cryptoKey from %s", source)
 	c.CryptoKey = cryptoKey
+}
+
+func (c *Config) overrideTrustedSubnetIfNotDefault(trustedSubnet string, source string) {
+	if trustedSubnet == "" {
+		logger.Debugf("source %s provided empty trusted subnet value, not overriding", source)
+		return
+	}
+
+	logger.Infof("overriding trustedSubnet from %s", source)
+	c.TrustedSubnet = trustedSubnet
 }
