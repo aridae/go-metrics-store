@@ -101,3 +101,28 @@ staticlint: build-staticlint
 generate-rsa-keys:
 	openssl genrsa -out ${path}.pem 4096
 	openssl rsa -in ${path}.pem -outform PEM -pubout -out ${path}.pem.pub
+
+.PHONY: install-protoc
+install-protoc: export PROTOC_VERSION := 30.0
+install-protoc: export PROTOC_ZIP := protoc-$(PROTOC_VERSION)-osx-x86_64.zip # версия только для osx
+install-protoc:
+	$(info Installing protoc...)
+	curl -o ${LOCALBIN}/${PROTOC_ZIP} -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}
+	unzip -o ${LOCALBIN}/${PROTOC_ZIP} -d ${LOCALBIN}/protoc
+	rm -f ${LOCALBIN}/${PROTOC_ZIP}
+
+.PHONY: install-protoc-gen-go
+install-protoc-gen-go: export PROTOC_GEN_GO_BIN := ${LOCALBIN}/protoc-gen-go
+install-protoc-gen-go: export PROTOC_GEN_GO_GRPC_BIN := ${LOCALBIN}/protoc-gen-go-grpc
+install-protoc-gen-go: install-protoc
+	$(info Installing binary dependencies...)
+	test -f ${PROTOC_GEN_GO_BIN} || GOBIN=$(LOCALBIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	test -f ${PROTOC_GEN_GO_GRPC_BIN} || GOBIN=$(LOCALBIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+.PHONY: generate-pb
+generate-pb: install-protoc-gen-go
+	$(info Generating proto and grpc implementation...)
+	PATH=$(PATH):$(LOCALBIN) $(LOCALBIN)/protoc/bin/protoc --proto_path=api/metrics-store/v1 \
+			--go_out=pkg/pb/metrics-store --go_opt=paths=source_relative \
+  			--go-grpc_out=pkg/pb/metrics-store  --go-grpc_opt=paths=source_relative \
+   			metrics_store.proto

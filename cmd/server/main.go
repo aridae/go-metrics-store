@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rsa"
+	metricsstore "github.com/aridae/go-metrics-store/internal/server/transport/grpc/metrics-store"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // подключаем пакет pprof
@@ -16,7 +17,8 @@ import (
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric"
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric/metric-inmem-repo"
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric/metric-pg-repo"
-	serverhttp "github.com/aridae/go-metrics-store/internal/server/transport/http"
+	grpcserver "github.com/aridae/go-metrics-store/internal/server/transport/grpc"
+	httpserver "github.com/aridae/go-metrics-store/internal/server/transport/http"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http/handlers"
 	gzipmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/gzip"
 	loggingmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/logging"
@@ -118,10 +120,18 @@ func main() {
 		serverMiddlewares = append(serverMiddlewares, subnetmw.ValidateTrustedSubnetMiddleware(trustedIPNet))
 	}
 
-	httpServer := serverhttp.NewServer(cnf.Address, httpRouter, serverMiddlewares...)
+	httpServer := httpserver.NewServer(cnf.Address, httpRouter, serverMiddlewares...)
+
+	grpcAPI := metricsstore.NewAPI(useCaseController)
+
+	grpcServer := grpcserver.NewServer(82, grpcAPI)
+
+	if err := grpcServer.Run(ctx); err != nil {
+		logger.Fatalf("failed to start grpc server: %v", err)
+	}
 
 	if err := httpServer.Run(ctx); err != nil {
-		logger.Fatalf("failed to start server: %v", err)
+		logger.Fatalf("failed to start http server: %v", err)
 	}
 }
 
