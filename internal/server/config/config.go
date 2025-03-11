@@ -13,6 +13,7 @@ const (
 	fileStoragePathDefault     = "./.data"
 	restoreDefault             = true
 	databaseMaxOpenConnDefault = 5
+	grpcPortDefault            = 7012
 )
 
 var (
@@ -30,6 +31,7 @@ type Config struct {
 	DatabaseMaxOpenConn int
 	Restore             bool
 	TrustedSubnet       string
+	GrpcPort            int
 }
 
 func Obtain() *Config {
@@ -164,4 +166,14 @@ func (c *Config) overrideTrustedSubnetIfNotDefault(trustedSubnet string, source 
 
 	logger.Infof("overriding trustedSubnet from %s", source)
 	c.TrustedSubnet = trustedSubnet
+}
+
+func (c *Config) overrideGRPCPortIfNotDefault(grpcPort int, source string) {
+	if grpcPort == grpcPortDefault {
+		logger.Debugf("source %s provided default grpc port value, not overriding", source)
+		return
+	}
+
+	logger.Infof("overriding grpc port from %s", source)
+	c.GrpcPort = grpcPort
 }

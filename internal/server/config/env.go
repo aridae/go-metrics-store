@@ -17,6 +17,7 @@ type envconf struct {
 	DatabaseDsnOverride          *string `env:"DATABASE_DSN"`
 	KeyOverride                  *string `env:"KEY"`
 	TrustedSubnetOverride        *string `env:"TRUSTED_SUBNET"`
+	GrpcPortOverride             *int    `env:"GRPC_PORT"`
 }
 
 func parseEnv() (*envconf, error) {
@@ -62,5 +63,9 @@ func (e envconf) override(cfg *Config) {
 
 	if e.TrustedSubnetOverride != nil {
 		cfg.overrideTrustedSubnetIfNotDefault(*e.TrustedSubnetOverride, "env")
+	}
+
+	if e.GrpcPortOverride != nil {
+		cfg.overrideGRPCPortIfNotDefault(*e.GrpcPortOverride, "env")
 	}
 }

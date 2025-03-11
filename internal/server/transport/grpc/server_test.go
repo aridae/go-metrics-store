@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	port := int64(8080)
+	port := 8082
 
 	srv := NewServer(port, nil)
 	assert.NotNil(t, srv, "Server should not be nil")
@@ -24,7 +24,7 @@ func TestServer_Run(t *testing.T) {
 	defer cancel()
 
 	fakeServer := &fakeGrpcServer{}
-	port := int64(8080)
+	port := 8082
 	srv := &Server{
 		server: fakeServer,
 		port:   port,
@@ -45,7 +45,7 @@ func TestServer_Run_PortAlreadyInUse(t *testing.T) {
 	defer cancel()
 
 	fakeServer := &fakeGrpcServer{}
-	port := int64(7012) // Using an arbitrary high port that might already be in use
+	port := 7012
 	srv := &Server{
 		server: fakeServer,
 		port:   port,

@@ -17,10 +17,10 @@ type grpcServer interface {
 
 type Server struct {
 	server grpcServer
-	port   int64
+	port   int
 }
 
-func NewServer(port int64, apiServer metricsstorepb.MetricsStoreAPIServer) *Server {
+func NewServer(port int, apiServer metricsstorepb.MetricsStoreAPIServer) *Server {
 	grpcServ := grpc.NewServer()
 	metricsstorepb.RegisterMetricsStoreAPIServer(grpcServ, apiServer)
 

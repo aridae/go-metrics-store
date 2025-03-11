@@ -124,7 +124,7 @@ func main() {
 
 	grpcAPI := metricsstore.NewAPI(useCaseController)
 
-	grpcServer := grpcserver.NewServer(82, grpcAPI)
+	grpcServer := grpcserver.NewServer(cnf.GrpcPort, grpcAPI)
 
 	if err := grpcServer.Run(ctx); err != nil {
 		logger.Fatalf("failed to start grpc server: %v", err)
