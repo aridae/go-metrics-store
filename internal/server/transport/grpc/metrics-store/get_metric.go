@@ -19,7 +19,7 @@ func (i *Implementation) GetMetric(ctx context.Context, req *desc.GetMetricReque
 		return nil, fmt.Errorf("useCasesController.GetAllMetrics: %w", err)
 	}
 	if domainMetric == nil {
-		return &desc.GetMetricResponse{}, status.Errorf(codes.NotFound, fmt.Sprintf("Metric with name %s, type %s not found", req.GetName(), req.GetType().String()))
+		return &desc.GetMetricResponse{}, status.Errorf(codes.NotFound, "Metric not found")
 	}
 
 	apiMetric, err := mapDomainToAPIMetric(*domainMetric)

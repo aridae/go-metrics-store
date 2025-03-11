@@ -9,17 +9,23 @@ import (
 	"net"
 )
 
+type grpcServer interface {
+	grpc.ServiceRegistrar
+	Stop()
+	Serve(net.Listener) error
+}
+
 type Server struct {
-	server *grpc.Server
+	server grpcServer
 	port   int64
 }
 
 func NewServer(port int64, apiServer metricsstorepb.MetricsStoreAPIServer) *Server {
-	grpcServer := grpc.NewServer()
-	metricsstorepb.RegisterMetricsStoreAPIServer(grpcServer, apiServer)
+	grpcServ := grpc.NewServer()
+	metricsstorepb.RegisterMetricsStoreAPIServer(grpcServ, apiServer)
 
 	return &Server{
-		server: grpcServer,
+		server: grpcServ,
 		port:   port,
 	}
 }
