@@ -14,6 +14,8 @@ type jsonconf struct {
 	FileStoragePathOverride      *string `json:"store_file"`
 	RestoreOverride              *bool   `json:"restore"`
 	DatabaseDsnOverride          *string `json:"database_dsn"`
+	TrustedSubnetOverride        *string `json:"trusted_subnet"`
+	GrpcPort                     *int    `json:"grpc_port"`
 }
 
 func parseJSONFile(path string) (*jsonconf, error) {
@@ -55,5 +57,9 @@ func (f jsonconf) override(cfg *Config) {
 
 	if f.CryptoKey != nil {
 		cfg.overrideCryptoKeyIfNotDefault(*f.CryptoKey, "json")
+	}
+
+	if f.GrpcPort != nil {
+		cfg.overrideGRPCPortIfNotDefault(*f.GrpcPort, "json")
 	}
 }

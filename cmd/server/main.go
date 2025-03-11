@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"crypto/rsa"
+	metricsstore "github.com/aridae/go-metrics-store/internal/server/transport/grpc/metrics-store"
+	"net"
 	"net/http"
 	_ "net/http/pprof" // подключаем пакет pprof
 	"os"
@@ -15,12 +17,14 @@ import (
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric"
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric/metric-inmem-repo"
 	"github.com/aridae/go-metrics-store/internal/server/repos/metric/metric-pg-repo"
-	serverhttp "github.com/aridae/go-metrics-store/internal/server/transport/http"
+	grpcserver "github.com/aridae/go-metrics-store/internal/server/transport/grpc"
+	httpserver "github.com/aridae/go-metrics-store/internal/server/transport/http"
 	"github.com/aridae/go-metrics-store/internal/server/transport/http/handlers"
 	gzipmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/gzip"
 	loggingmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/logging"
 	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa"
 	sha256mw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/sha256"
+	subnetmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/subnet"
 	"github.com/aridae/go-metrics-store/internal/server/usecases"
 	"github.com/aridae/go-metrics-store/pkg/inmem"
 	"github.com/aridae/go-metrics-store/pkg/logger"
@@ -111,10 +115,23 @@ func main() {
 		serverMiddlewares = append(serverMiddlewares, rsamw.DecryptRequestMiddleware(privateKey))
 	}
 
-	httpServer := serverhttp.NewServer(cnf.Address, httpRouter, serverMiddlewares...)
+	if cnf.TrustedSubnet != "" {
+		trustedIPNet := mustParseCIDR(cnf.TrustedSubnet)
+		serverMiddlewares = append(serverMiddlewares, subnetmw.ValidateTrustedSubnetMiddleware(trustedIPNet))
+	}
+
+	httpServer := httpserver.NewServer(cnf.Address, httpRouter, serverMiddlewares...)
+
+	grpcAPI := metricsstore.NewAPI(useCaseController)
+
+	grpcServer := grpcserver.NewServer(cnf.GrpcPort, grpcAPI)
+
+	if err := grpcServer.Run(ctx); err != nil {
+		logger.Fatalf("failed to start grpc server: %v", err)
+	}
 
 	if err := httpServer.Run(ctx); err != nil {
-		logger.Fatalf("failed to start server: %v", err)
+		logger.Fatalf("failed to start http server: %v", err)
 	}
 }
 
@@ -164,4 +181,16 @@ func mustParsePrivateKey(path string) *rsa.PrivateKey {
 	}
 
 	return privateKey
+}
+
+func mustParseCIDR(cidr string) *net.IPNet {
+	_, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		logger.Fatalf("failed to parse trusted subnet <CIDR:%s>: %v", cidr, err)
+	}
+	if ipNet == nil {
+		logger.Fatalf("unexpectedly got nil IPNet <CIDR:%s>", cidr)
+	}
+
+	return ipNet
 }

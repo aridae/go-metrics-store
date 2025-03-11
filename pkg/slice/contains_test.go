@@ -2,6 +2,8 @@ package slice
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
 	"testing"
 )
 
@@ -82,5 +84,78 @@ func BenchmarkContains(b *testing.B) {
 				}
 			})
 		}
+	}
+}
+
+func TestContainsByFunc(t *testing.T) {
+	tests := []struct {
+		name  string
+		slice []interface{}
+		pred  func(n interface{}) bool
+		want  bool
+	}{
+		{
+			name:  "Find number greater than 10",
+			slice: []interface{}{5, 8, 12, 7},
+			pred:  func(n interface{}) bool { return n.(int) > 10 },
+			want:  true,
+		},
+		{
+			name:  "Find string 'hello'",
+			slice: []interface{}{"world", "hello", "goodbye"},
+			pred:  func(s interface{}) bool { return s.(string) == "hello" },
+			want:  true,
+		},
+		{
+			name:  "No negative numbers",
+			slice: []interface{}{1, 2, 3, 4},
+			pred:  func(n interface{}) bool { return n.(int) < 0 },
+			want:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ContainsByFunc(tt.slice, tt.pred)
+			if got != tt.want {
+				t.Errorf("ContainsByFunc() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// BenchmarkContainsByFuncInt проверяет производительность функции ContainsByFunc
+// при работе с большим количеством целочисленных элементов.
+func BenchmarkContainsByFuncInt(b *testing.B) {
+	size := 1000000
+	random := rand.New(rand.NewSource(42))
+
+	intSlice := make([]int, size)
+	for i := 0; i < size; i++ {
+		intSlice[i] = random.Intn(size)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = ContainsByFunc(intSlice, func(n int) bool { return n == size/2 })
+	}
+}
+
+// BenchmarkContainsByFuncString проверяет производительность функции ContainsByFunc
+// при работе с большим количеством строковых элементов.
+func BenchmarkContainsByFuncString(b *testing.B) {
+	size := 1000000
+	random := rand.New(rand.NewSource(42))
+
+	stringSlice := make([]string, size)
+	for i := 0; i < size; i++ {
+		stringSlice[i] = strconv.Itoa(random.Intn(size))
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = ContainsByFunc(stringSlice, func(s string) bool { return s == "500000" })
 	}
 }

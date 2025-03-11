@@ -14,6 +14,8 @@ type flagsconf struct {
 	Key                     string
 	StoreIntervalOverride   time.Duration
 	RestoreOverride         bool
+	TrustedSubnet           string
+	GrpcPort                int
 }
 
 func parseFlags() flagsconf {
@@ -34,6 +36,10 @@ func parseFlags() flagsconf {
 
 	flag.StringVar(&flgs.CryptoKey, "crypto-key", "", "путь до файла с приватным ключом")
 
+	flag.StringVar(&flgs.TrustedSubnet, "t", "", "адрес доверенной подсети в виде строкового представления CIDR")
+
+	flag.IntVar(&flgs.GrpcPort, "grpc-port", grpcPortDefault, "порт для GRPC сервера")
+
 	flag.StringVar(&flgs.ConfigFilePath, "c", "", "Path to config file")
 
 	flag.Parse()
@@ -47,4 +53,6 @@ func (f flagsconf) override(cfg *Config) {
 	cfg.overrideFileStoragePathIfNotDefault(f.FileStoragePathOverride, "flags")
 	cfg.overrideRestoreIfNotDefault(f.RestoreOverride, "flags")
 	cfg.overrideCryptoKeyIfNotDefault(f.CryptoKey, "flags")
+	cfg.overrideTrustedSubnetIfNotDefault(f.CryptoKey, "flags")
+	cfg.overrideGRPCPortIfNotDefault(f.GrpcPort, "flags")
 }
