@@ -14,6 +14,7 @@ type jsonconf struct {
 	FileStoragePathOverride      *string `json:"store_file"`
 	RestoreOverride              *bool   `json:"restore"`
 	DatabaseDsnOverride          *string `json:"database_dsn"`
+	TrustedSubnetOverride        *string `json:"trusted_subnet"`
 }
 
 func parseJSONFile(path string) (*jsonconf, error) {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rsa"
+	"net"
 	"net/http"
 	_ "net/http/pprof" // подключаем пакет pprof
 	"os"
@@ -21,6 +22,7 @@ import (
 	loggingmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/logging"
 	rsamw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/rsa"
 	sha256mw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/sha256"
+	subnetmw "github.com/aridae/go-metrics-store/internal/server/transport/http/mw/subnet"
 	"github.com/aridae/go-metrics-store/internal/server/usecases"
 	"github.com/aridae/go-metrics-store/pkg/inmem"
 	"github.com/aridae/go-metrics-store/pkg/logger"
@@ -111,6 +113,11 @@ func main() {
 		serverMiddlewares = append(serverMiddlewares, rsamw.DecryptRequestMiddleware(privateKey))
 	}
 
+	if cnf.TrustedSubnet != "" {
+		trustedIPNet := mustParseCIDR(cnf.TrustedSubnet)
+		serverMiddlewares = append(serverMiddlewares, subnetmw.ValidateTrustedSubnetMiddleware(trustedIPNet))
+	}
+
 	httpServer := serverhttp.NewServer(cnf.Address, httpRouter, serverMiddlewares...)
 
 	if err := httpServer.Run(ctx); err != nil {
@@ -164,4 +171,16 @@ func mustParsePrivateKey(path string) *rsa.PrivateKey {
 	}
 
 	return privateKey
+}
+
+func mustParseCIDR(cidr string) *net.IPNet {
+	_, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		logger.Fatalf("failed to parse trusted subnet <CIDR:%s>: %v", cidr, err)
+	}
+	if ipNet == nil {
+		logger.Fatalf("unexpectedly got nil IPNet <CIDR:%s>", cidr)
+	}
+
+	return ipNet
 }

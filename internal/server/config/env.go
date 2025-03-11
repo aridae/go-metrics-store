@@ -16,6 +16,7 @@ type envconf struct {
 	RestoreOverride              *bool   `env:"RESTORE"`
 	DatabaseDsnOverride          *string `env:"DATABASE_DSN"`
 	KeyOverride                  *string `env:"KEY"`
+	TrustedSubnetOverride        *string `env:"TRUSTED_SUBNET"`
 }
 
 func parseEnv() (*envconf, error) {
@@ -57,5 +58,9 @@ func (e envconf) override(cfg *Config) {
 
 	if e.CryptoKey != nil {
 		cfg.overrideCryptoKeyIfNotDefault(*e.CryptoKey, "env")
+	}
+
+	if e.TrustedSubnetOverride != nil {
+		cfg.overrideTrustedSubnetIfNotDefault(*e.TrustedSubnetOverride, "env")
 	}
 }

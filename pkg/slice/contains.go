@@ -31,3 +31,35 @@ func Contains[T comparable](slice []T, target T) bool {
 
 	return false
 }
+
+// ContainsByFunc проверяет наличие элемента в срезе, который соответствует условию, заданному функцией-предикатом.
+//
+// Функция проходит по каждому элементу среза и возвращает true, если хотя бы один элемент
+// удовлетворяет критерию, определенному предикатом, иначе возвращает false.
+//
+// Параметры:
+//
+//	slice - Срез значений параметризованного типа T.
+//	predicate - Функция-предикат, которая принимает элемент типа T и возвращает булевое значение.
+//
+// Возвращаемое значение:
+//
+//	True, если существует элемент в срезе, который удовлетворяет предикату, иначе False.
+//
+// Примеры:
+//
+//	ContainsByFunc([]int{1, 2, 3}, func(x int) bool { return x > 2 }) // Возвращает true
+//	ContainsByFunc([]string{"a", "b"}, func(s string) bool { return s == "c" }) // Возвращает false
+//
+// Ошибки:
+//
+//	Функция не вызывает ошибок.
+func ContainsByFunc[T any](slice []T, predicate func(item T) bool) bool {
+	for _, v := range slice {
+		if isFound := predicate(v); isFound {
+			return true
+		}
+	}
+
+	return false
+}
